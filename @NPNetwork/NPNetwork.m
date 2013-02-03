@@ -74,7 +74,7 @@ classdef NPNetwork<handle
                 % only the output layer is adaptive. 
                 % the number of neurons on the output layer = the number of
                 % neurons on the last hidden layer
-                obj.adaptive_weights = zeros(M_vec(end),1);
+                obj.adaptive_weights = zeros(1,M_vec(end));
             else
                 obj.L = 0;
                 obj.M_vec = 0;
@@ -85,7 +85,7 @@ classdef NPNetwork<handle
         end
         
         % change constructor parameter
-        function obj = setBasicParameter(obj,var1,var2)
+        function setBasicParameter(obj,var1,var2)
             switch var1,
                 case 'L'
                     obj.L = var2;
@@ -99,7 +99,7 @@ classdef NPNetwork<handle
         end
         
         % set mu/misadjustment
-        function obj = setStepSize(obj,var1,var2)
+        function setStepSize(obj,var1,var2)
             if strcmp(var1,'misadjustment')
                 obj.misadj = var2;
             elseif strcmp(var1,'step size')
@@ -109,7 +109,7 @@ classdef NPNetwork<handle
         end
         
         % set training iteration
-        function obj = setTrainingTimes(obj,iter)
+        function setTrainingTimes(obj,iter)
             obj.TrainingIter = iter;
         end
         
@@ -159,16 +159,16 @@ classdef NPNetwork<handle
             b = obj.RndVar2;
             if strcmp(obj.RndDistribution,'Normal')
                 weights{1} = a + sqrt(b) * ...
-                    randn(obj.L,obj.M_vec(1));
+                    randn(obj.M_vec(1),obj.L);
                 for i = 2:obj.NumOfHiddenLayer,
                     weights{i} = a * sqrt(b) * ...
-                        randn(obj.M_vec(i-1),obj.M_vec(i));
+                        randn(obj.M_vec(i),obj.M_vec(i-1));
                 end
             elseif strcmp(obj.RndDistribution,'Uniform')
-                weights{1} = a + (b-a)*rand(obj.L,obj.M_vec(1));
+                weights{1} = a + (b-a)*rand(obj.M_vec(1),obj.L);
                 for i = 2:obj.NumOfHiddenLayer,
-                    weights{i} = a + (b-a)*rand(obj.M_vec(i-1),...
-                        obj.M_vec(i));
+                    weights{i} = a + (b-a)*rand(obj.M_vec(i),...
+                        obj.M_vec(i-1));
                 end
             end
             obj.fixed_weights_vec = weights;
@@ -187,8 +187,20 @@ classdef NPNetwork<handle
             weights = obj.adaptive_weights;
         end
         
+        % set adaptive weights
+        function setAdaptiveWeights(obj,var1)
+            obj.adaptive_weights = var1;
+        end
+        
         % set Training signal
-        function obj = setTraining(obj,x_training,d_training)
+        function setTraining(obj,x_training,d_training)
+            
+            if length(x_training) ~= length(d_training)
+                error('not same length');
+            elseif length(x_training) < (obj.N+obj.L)
+                error('input signal is too short');
+            end
+            
             obj.x_training = x_training;
             obj.d_training = d_training;
             
@@ -197,7 +209,14 @@ classdef NPNetwork<handle
         end
         
         % set Testing signal
-        function obj = setTesting(obj,x_testing,d_testing)
+        function setTesting(obj,x_testing,d_testing)
+            
+            if length(x_testing) ~= length(d_testing)
+                error('not same length');
+            elseif length(x_testing) < (obj.N+obj.L)
+                error('input signal is too short');
+            end
+            
             obj.x_testing = x_testing;
             obj.d_testing = d_testing;
             
@@ -277,7 +296,8 @@ classdef NPNetwork<handle
             elseif strcmp(var1,'Training')
                 obj.e_training = 0;
                 obj.y_training = 0;
-            end          
+            end
+        end
         
     end
     

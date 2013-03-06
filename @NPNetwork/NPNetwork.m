@@ -74,7 +74,7 @@ classdef NPNetwork<handle
                 % only the output layer is adaptive. 
                 % the number of neurons on the output layer = the number of
                 % neurons on the last hidden layer
-                obj.adaptive_weights = zeros(1,M_vec(end));
+                obj.adaptive_weights = zeros(M_vec(end),1);
             else
                 obj.L = 0;
                 obj.M_vec = 0;

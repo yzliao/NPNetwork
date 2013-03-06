@@ -1,11 +1,11 @@
 function Training(obj,varargin)
-    sigC = @(x) -1+2./(1+exp(-x));
+    sigmoid_func = @(x) -1+2./(1+exp(-x));
     
-    if nargin < 1 % default
-        ifLinear        = true;
+    if nargin == 1 % default
+        ifLinear        = false;
         ifHiddenLayer   = true;
     else
-        for i = 1:nargin
+        for i = 1:nargin-1
             var1 = varargin{i};
             switch var1,
                 case 'Linear',
@@ -14,7 +14,7 @@ function Training(obj,varargin)
                     ifLinear = false;
                 case 'Hidden Layer',
                     ifHiddenLayer = true;
-                case 'Non Hidden Layer',
+                case 'No Hidden Layer',
                     ifHiddenLayer = false;
                 otherwise,
                     display(['Argument ',var1,' is not correct']);
@@ -23,13 +23,19 @@ function Training(obj,varargin)
     end
     
     % display argument
-    display(['We are training', ifLinear, ' system with', ifHiddenLayer]);
+    %display(['We are training', ifLinear, ' system with', ifHiddenLayer]);
+    
+    % get parameters from object properties
+    L = obj.L;
+    N = obj.N;
+    x_training = obj.x_training;
+    d_training = obj.d_training;
     
     % convert streaming to matrix
-    xTrainingMtx = zeros(L,N);
-    for i = L:N+L-1,
+    xTrainingMtx = zeros(L,N+L);
+    for i = L:N+L,
         xtdl = x_training(i:-1:i-L+1);
-        xTrainingMtx(:,i-L+1) = xtdl;
+        xTrainingMtx(:,i) = xtdl;
     end
     
     % fixed layer
@@ -40,7 +46,7 @@ function Training(obj,varargin)
         for i = 1:obj.NumOfHiddenLayer,
             fixed_weights = fixedWeightVec{i};
             xtdl = fixed_weights*xtdl;
-            xtdl = sigC(xtdl);
+            xtdl = sigmoid_func(xtdl);
         end
         
         fixedLayerMtx = xtdl;
@@ -49,8 +55,8 @@ function Training(obj,varargin)
     end
     
     % calculate the power
-    if ~obj.setmu
-        RMatrix = xTrainingMtx * xTrainingMtx';
+    if ~obj.ifsetmu
+        RMatrix = fixedLayerMtx* fixedLayerMtx';
         RMatrix = RMatrix./N;
         trR = trace(RMatrix);
         mu = obj.misadj/trR;
@@ -60,32 +66,41 @@ function Training(obj,varargin)
     end
     
     % adaptive layer
-    elms = zeros(N,1);
-    ylms = zeros(N,1);
+    elms = zeros(N+L,1);
+    ylms = zeros(N+L,1);
     
     if ifHiddenLayer,
-        adaptive_weights = obj.getAdaptiveWeights();
+        adaptive_weights = obj.getAdaptiveWeights();    % from last hidden layer
     else
-        adaptive_weights = zeros(1,L);
+        adaptive_weights = zeros(L,1);                  % from tapped delay line
     end
     
-    d_training = obj.d_training;
+
     for n = 1:obj.TrainingIter,
-        for i = 1:N,
-            xtdl = xTrainingMtx(:,i);
-            s = adaptive_weights*xtdl;
+        for i = L:N+L,
+            xtdl = fixedLayerMtx(:,i);
+            s = adaptive_weights'*xtdl;
             if ifLinear,
-                y = s;
+                filter_output = s;
             else
-                y = sigC(s);
+                filter_output = sigmoid_func(s);
             end
             
-            err = d_training(i+L)-y;
+            filter_error = d_training(i)-filter_output;
             
-            ylms(i) = y;
-            elms(i) = err;
+            ylms(i) = filter_output;
+            elms(i) = filter_error;
             
-            adaptive_weights = adaptive_weights + mu*err*xtdl';
+            if ifLinear,
+                % theta_j = theta_j + mu*(y^(i) - theta_j'*x^(i))*x_j^(i)
+                adaptive_weights = adaptive_weights + mu*filter_error*xtdl;
+            else
+                sigmoid_dot = 0.5*(1-filter_output.^2);
+                % theta = theta + 2*mu*sigmoid_dot*error*xtdl
+                adaptive_weights = adaptive_weights + 2*mu*sigmoid_dot*...
+                    filter_error*xtdl;
+            end
+     
         end
     end
     

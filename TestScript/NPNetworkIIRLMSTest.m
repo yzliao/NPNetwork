@@ -8,6 +8,9 @@
 %  H(z) = ------------
 %         1 - 0.8*z^-1
 %
+
+addpath('../')
+
 clear all
 close all
 
@@ -39,5 +42,23 @@ figure(2)
 plot(plant_output,'r-o');
 hold on
 plot(training_output,'b');
+
+% Testing
+test_input = randn(1e5,1);
+test_output = filter(1,[1,-0.8],test_input);
+myNPNetwork.setTesting(test_input,test_output);
+
+myNPNetwork.Testing('Linear','No Hidden Layer');
+
+% Plot error
+[testing_error,testing_output] = myNPNetwork.getOutputSignal('Testing');
+
+figure(3)
+plot(testing_error.^2);
+
+figure(4)
+plot(test_output,'r-o');
+hold on
+plot(testing_output,'b');
 
 

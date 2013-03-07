@@ -52,7 +52,7 @@ myNetwork_2.initFixedWeights();
 
 % Training
 myNetwork_1.Training('Nonlinear','Hidden Layer');
-myNetwork_2.Training('Nonlinear','Hidden Layer');
+%myNetwork_2.Training('Nonlinear','Hidden Layer');
 
 % Plot Error
 [error_vector_1,filter_output_vector_1] = myNetwork_1.getOutputSignal('Training');
@@ -71,20 +71,33 @@ ylabel('Output');
 legend('Plant Output','Filter Output');
 title('Filter 1');
 
-figure(3)
-plot(error_vector_2.^2);
-ylabel('MSE')
-title('Filter 2');
+% figure(3)
+% plot(error_vector_2.^2);
+% ylabel('MSE')
+% title('Filter 2');
+% 
+% mean(error_vector_2(end*9/10:end).^2)
+% 
+% figure(4)
+% plot(plant_output_2,'r-o');
+% hold on
+% plot(filter_output_vector_2,'b');
+% ylabel('Output');
+% legend('Plant Output','Filter Output');
+% title('Filter 2');
 
-mean(error_vector_2(end*9/10:end).^2)
+% Test filter 1
+test_input = randn(1e5,1);
+test_output_1 = sigmoid(filter([0.8,0.7,0.6],1,test_input));
+myNetwork_1.setTesting(test_input,test_output_1);
 
-figure(4)
-plot(plant_output_2,'r-o');
-hold on
-plot(filter_output_vector_2,'b');
-ylabel('Output');
-legend('Plant Output','Filter Output');
-title('Filter 2');
+% Testing
+myNetwork_1.Testing('Nonlinear','Hidden Layer');
+
+% plot error
+[testing_error_1,testing_output_1] = myNetwork_1.getOutputSignal('Testing');
+figure(5)
+plot(testing_error_1.^2);
 
 
 

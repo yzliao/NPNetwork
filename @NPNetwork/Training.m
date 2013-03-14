@@ -10,12 +10,16 @@ function Training(obj,varargin)
             switch var1,
                 case 'Linear',
                     ifLinear = true;
+                    display('Linear');
                 case 'Nonlinear',
                     ifLinear = false;
+                    display('Nonlinear');
                 case 'Hidden Layer',
                     ifHiddenLayer = true;
+                    display('Hidden Layer');
                 case 'No Hidden Layer',
                     ifHiddenLayer = false;
+                    display('No Hidden Layer');
                 otherwise,
                     display(['Argument ',var1,' is not correct']);
             end

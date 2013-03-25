@@ -47,13 +47,23 @@ function Training(obj,varargin)
     d_training = obj.d_training;
     
     % convert streaming to matrix
-    xTrainingMtx = zeros(L,N+L);
-   
-    for i = L:N+L,
-        xtdl = x_training(i:-1:i-L+1);
-        xTrainingMtx(:,i) = xtdl;
+%     xTrainingMtx = zeros(L,N+L);
+%    
+%     for i = L:N+L,
+%         xtdl = x_training(i:-1:i-L+1);
+%         xTrainingMtx(:,i) = xtdl;
+%     end
+
+    [p,q] = size(x_training);
+    if p == L,
+        xTrainingMtx = x_training;
+    elseif q == L,
+        xTrainingMtx = x_training';
+    else
+        display('Incorrect training input size');
+        return;
     end
-    
+      
     
     % fixed layer
     if ifHiddenLayer,

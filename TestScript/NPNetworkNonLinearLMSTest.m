@@ -3,6 +3,8 @@
 clear all
 close all
 
+addpath('../');
+
 % Filter 1:
 %
 %
@@ -43,8 +45,11 @@ plant_input = randn(N+L2,1);
 plant_output_1 = sigmoid(filter([0.8,0.7,0.6],1,plant_input));
 plant_output_2 = sigmoid(filter(1,[1,-0.8],plant_input));
 
-myNetwork_1.setTraining(plant_input,plant_output_1);
-myNetwork_2.setTraining(plant_input,plant_output_2);
+plant_input1 = streaming2mtx(plant_input,L1,N,L1);
+plant_input2 = streaming2mtx(plant_input,L2,N,L2);
+
+myNetwork_1.setTraining(plant_input1,plant_output_1);
+myNetwork_2.setTraining(plant_input2,plant_output_2);
 
 % fixed weights
 myNetwork_1.initFixedWeights();

@@ -195,11 +195,11 @@ classdef NPNetwork<handle
         % set Training signal
         function setTraining(obj,x_training,d_training)
             
-            if length(x_training) ~= length(d_training)
-                error('not same length');
-            elseif length(x_training) < (obj.N+obj.L)
-                error('input signal is too short');
-            end
+%             if length(x_training) ~= length(d_training)
+%                 error('not same length');
+%             elseif length(x_training) < (obj.N+obj.L)
+%                 error('input signal is too short');
+%             end
             
             obj.x_training = x_training;
             obj.d_training = d_training;

@@ -26,19 +26,30 @@ function Testing(obj,varargin)
     L = obj.L;
     x_testing = obj.x_testing;
     d_testing = obj.d_testing;
-    N = length(x_testing)-L;
+   
     
     % convert streaming to matrix
-    xTrainingMtx = zeros(L,N+L);
-    for i = L:N+L,
-        xtdl = x_testing(i:-1:i-L+1);
-        xTrainingMtx(:,i) = xtdl;
+%     xTrainingMtx = zeros(L,N+L);
+%     for i = L:N+L,
+%         xtdl = x_testing(i:-1:i-L+1);
+%         xTrainingMtx(:,i) = xtdl;
+%     end
+
+    [p,q] = size(x_testing);
+    if p == L,
+        xTestingMtx = x_testing;
+    elseif q == L,
+        xTestingMtx = x_testing';
+    else
+        display('Incorrect testing input size');
     end
+    [~,N] = size(xTestingMtx);
+    N = N - L;  % correct size
     
     % fixed layer
     if ifHiddenLayer,
         fixedWeightVec = obj.getFixedWeights();
-        xtdl = xTrainingMtx;
+        xtdl = xTestingMtx;
         
         for i = 1:obj.NumOfHiddenLayer,
             fixed_weights = fixedWeightVec{i};
@@ -48,7 +59,7 @@ function Testing(obj,varargin)
         
         fixedLayerMtx = xtdl;
     else
-        fixedLayerMtx = xTrainingMtx;
+        fixedLayerMtx = xTestingMtx;
     end
     
     % adaptive layer

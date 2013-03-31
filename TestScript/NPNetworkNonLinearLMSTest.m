@@ -94,7 +94,7 @@ title('Filter 1');
 % Test filter 1
 test_input = randn(1e5,1);
 test_output_1 = sigmoid(filter([0.8,0.7,0.6],1,test_input));
-myNetwork_1.setTesting(test_input,test_output_1);
+myNetwork_1.setTesting(streaming2mtx(test_input,L1,length(test_input)-L1,L1),test_output_1);
 
 % Testing
 myNetwork_1.Testing('Nonlinear','Hidden Layer');
@@ -103,6 +103,27 @@ myNetwork_1.Testing('Nonlinear','Hidden Layer');
 [testing_error_1,testing_output_1] = myNetwork_1.getOutputSignal('Testing');
 figure(5)
 plot(testing_error_1.^2);
+
+% Train filter 1 by BP
+[elms,ylms,hidden_weights_cell,output_weights] = myNetwork_1.BP_Training(0,'Nonlinear');
+
+figure(6)
+plot(elms.^2);
+ylabel('MSE')
+title('filter 1 BP');
+
+figure(7)
+plot(plant_output_1,'r-o');
+hold on
+plot(ylms,'b');
+ylabel('Output');
+legend('Plant Output','Filter Output');
+title('Filter 1 BP');
+
+[elms,ylms] = myNetwork_1.BP_Testing(hidden_weights_cell,output_weights,'Nonlinear');
+
+figure(8)
+plot(elms.^2);
 
 
 

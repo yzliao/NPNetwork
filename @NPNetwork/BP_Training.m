@@ -1,32 +1,28 @@
 function [elms,ylms,hidden_weights_cell,output_weights] = ...
-    BP_Training(obj,varargin)
+    BP_Training(obj,mu,var1)
 
     sigmoid_func = @(x) -1 + 2./(1+exp(-x));
-    
-    if nargin == 1 % default
-        ifLinear        = false;
-    else 
-        for i = 1:nargin-1,
-            var1 = varargin{i};
-            switch var1,
-                case 'Linear',
-                    ifLinear = true;
-                    display('Linear');
-                case 'Nonlinear',
-                    ifLinear = false;
-                    display('Nonlinear');
-                otherwise,
-                    display(['Argument ',var1,' is not correct']);
-            end
-        end
+    switch var1,
+        case 'Linear',
+            ifLinear = true;
+            display('Linear');
+        case 'Nonlinear',
+            ifLinear = false;
+            display('Nonlinear');
+        otherwise,
+            ifLinear = false;
+            display('Nonlinear');
     end
+
     
     % get parameters from object properties
     L = obj.L;
     N = obj.N;
     x_training = obj.x_training;
     d_training = obj.d_training;
-    mu = obj.mu;
+    if mu == 0,
+        mu = obj.mu;
+    end
     
     [p,q] = size(x_training);
     if p == L,

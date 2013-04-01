@@ -63,11 +63,7 @@ classdef NPNetwork<handle
                 obj.L = L;
                 obj.M_vec = M_vec;
 
-                if N < L,
-                    error('Number of patterns is less than the delay taps');
-                else
-                    obj.N = N;
-                end
+                obj.N = N;
 
                 obj.NumOfHiddenLayer = length(M_vec);
 

@@ -1,5 +1,5 @@
 function [elms,ylms,hidden_weights_cell,output_weights] = ...
-    BP_Training(obj,mu,var1)
+    BP_Training(obj,mu,var1,prev_hidden_weights_cell,prev_output_weights)
 
     sigmoid_func = @(x) -1 + 2./(1+exp(-x));
     switch var1,
@@ -35,20 +35,31 @@ function [elms,ylms,hidden_weights_cell,output_weights] = ...
     end
     
     % initalize hidden layer weights
-    hidden_weights_cell = cell(length(obj.M_vec),1);
-    
-    % 1st hidden layer
-    weights_vec = -1 + 2*rand(obj.M_vec(1),L);
-    hidden_weights_cell{1} = weights_vec;
-    
-    % 2nd hidden layer to nth (last) hidden layer
-    for layer = 2:length(obj.M_vec),
-        weights_vec = -1 + 2*rand(obj.M_vec(layer),obj.M_vec(layer-1));
-        hidden_weights_cell{layer} = weights_vec;
+    if nargin < 4,
+%         hidden_weights_cell = cell(length(obj.M_vec),1);
+%         % 1st hidden layer
+%         weights_vec = -1 + 2*rand(obj.M_vec(1),L);
+%         hidden_weights_cell{1} = weights_vec;
+%     
+%         % 2nd hidden layer to nth (last) hidden layer
+%         for layer = 2:length(obj.M_vec),
+%             weights_vec = -1 + 2*rand(obj.M_vec(layer),obj.M_vec(layer-1));
+%             hidden_weights_cell{layer} = weights_vec;
+%         end
+        hidden_weights_cell = obj.getFixedWeights();
+    else
+        hidden_weights_cell = prev_hidden_weights_cell;
     end
     
+    
+    
     % output layer
-    output_weights = -1+2*rand(1,obj.M_vec(end));
+    if nargin < 5,
+        %output_weights = -1+2*rand(1,obj.M_vec(end));
+        output_weights = zeros(1,obj.M_vec(end));
+    else
+        output_weights = prev_output_weights;
+    end
 
     % output vector
     ylms = zeros(N+L,1);
@@ -57,16 +68,16 @@ function [elms,ylms,hidden_weights_cell,output_weights] = ...
     % BP training algorithm
     for i = L:N+L,
         layer_input = xTrainingMtx(:,i);
-        layer_output_cell = cell(length(obj.M_vec),1);
-        hidden_weights_new = cell(length(obj.M_vec),1);
-        delta_cell = cell(length(obj.M_vec),1);
+        layer_output_cell = cell(obj.NumOfHiddenLayer,1);
+        hidden_weights_new = cell(obj.NumOfHiddenLayer,1);
+        delta_cell = cell(obj.NumOfHiddenLayer,1);
 
         % input from plant
         xtdl = layer_input;
 
         % feedforward
         % hidden layer
-        for layer = 1:length(obj.M_vec),
+        for layer = 1:obj.NumOfHiddenLayer,
             layer_weights = hidden_weights_cell{layer};
             layer_output = layer_weights*layer_input;
             layer_output_sgm = sigmoid_func(layer_output);
@@ -108,7 +119,7 @@ function [elms,ylms,hidden_weights_cell,output_weights] = ...
 
         % update last hidden layer weights -- non linear
         layer_weights = hidden_weights_cell{end};
-        if layer == 1,
+        if obj.numHiddenLayer == 1, % only one hidden layer
             layer_input = xtdl;
         else
             layer_input = layer_output_cell{end-1};
@@ -119,7 +130,7 @@ function [elms,ylms,hidden_weights_cell,output_weights] = ...
         hidden_weights_new{end} = layer_weights;
 
         % n-1th hidden layer to 1st hidden layer
-        for layer = length(obj.M_vec)-1:-1:1,
+        for layer = obj.NumOfHiddenLayer-1:-1:1,
             next_layer_weights = hidden_weights_cell{layer+1};
             if layer == 1,
                 layer_input = xtdl;

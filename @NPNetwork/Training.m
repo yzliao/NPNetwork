@@ -68,15 +68,21 @@ function Training(obj,varargin)
     % fixed layer
     if ifHiddenLayer,
         fixedWeightVec = obj.getFixedWeights();
-        xtdl = xTrainingMtx;
+        xtdl_sig = xTrainingMtx;
         for i = 1:obj.NumOfHiddenLayer,
             fixed_weights = fixedWeightVec{i};
-            xtdl = fixed_weights*xtdl;
-            xtdl = sigmoid_func(xtdl);
+            xtdl = fixed_weights*xtdl_sig;
+            xtdl_sig = sigmoid_func(xtdl);
         end
         
         
-        fixedLayerMtx = xtdl;
+%         % test purpose
+%         xx = xtdl(:,L:N+L);
+%         p = length(find(abs(xx(:)>1)))/length(xx(:));
+%         display(['Largest:',num2str(max(abs(xx(:))))]);
+%         display(['Num distribution',num2str(p)]);
+        
+        fixedLayerMtx = xtdl_sig;
     else
         fixedLayerMtx = xTrainingMtx;
     end
@@ -92,7 +98,7 @@ function Training(obj,varargin)
     
     % calculate the power
     if ~obj.ifsetmu
-        RMatrix = fixedLayerMtx* fixedLayerMtx';
+        RMatrix = fixedLayerMtx(:,L:N+L)* fixedLayerMtx(:,L:N+L)';
         RMatrix = RMatrix./N;
         trR = trace(RMatrix);
         mu = obj.misadj/trR;
@@ -112,12 +118,14 @@ function Training(obj,varargin)
     if ifHiddenLayer,
         adaptive_weights = obj.getAdaptiveWeights();    % from last hidden layer
     else
-        adaptive_weights = zeros(L,1);                  % from tapped delay line
+        %adaptive_weights = -0.1+0.2*rand(L,1);                  % from tapped delay line
+        adaptive_weights = zeros(L,1);
     end
     
 
     for n = 1:obj.TrainingIter,
         for i = L:N+L,
+        %for i = 1:N %%%
             xtdl = fixedLayerMtx(:,i);
             s = adaptive_weights'*xtdl;
             if ifLinear,

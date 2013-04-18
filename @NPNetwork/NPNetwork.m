@@ -207,11 +207,11 @@ classdef NPNetwork<handle
         % set Testing signal
         function setTesting(obj,x_testing,d_testing)
             
-            if length(x_testing) ~= length(d_testing)
-                error('not same length');
-            elseif length(x_testing) < (obj.N+obj.L)
-                error('input signal is too short');
-            end
+%             if length(x_testing) ~= length(d_testing)
+%                 error('not same length');
+%             elseif length(x_testing) < (obj.N+obj.L)
+%                 error('input signal is too short');
+%             end
             
             obj.x_testing = x_testing;
             obj.d_testing = d_testing;

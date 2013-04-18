@@ -37,15 +37,16 @@ function [elms,ylms,hidden_weights_cell,output_weights] = ...
     % initalize hidden layer weights
     if nargin < 4,
 %         hidden_weights_cell = cell(length(obj.M_vec),1);
-%         % 1st hidden layer
+%         %1st hidden layer
 %         weights_vec = -1 + 2*rand(obj.M_vec(1),L);
 %         hidden_weights_cell{1} = weights_vec;
 %     
-%         % 2nd hidden layer to nth (last) hidden layer
+%         %2nd hidden layer to nth (last) hidden layer
 %         for layer = 2:length(obj.M_vec),
 %             weights_vec = -1 + 2*rand(obj.M_vec(layer),obj.M_vec(layer-1));
 %             hidden_weights_cell{layer} = weights_vec;
 %         end
+%         
         hidden_weights_cell = obj.getFixedWeights();
     else
         hidden_weights_cell = prev_hidden_weights_cell;
@@ -67,6 +68,7 @@ function [elms,ylms,hidden_weights_cell,output_weights] = ...
     
     % BP training algorithm
     for i = L:N+L,
+%    for i = 1:N, %%%
         layer_input = xTrainingMtx(:,i);
         layer_output_cell = cell(obj.NumOfHiddenLayer,1);
         hidden_weights_new = cell(obj.NumOfHiddenLayer,1);
@@ -119,14 +121,16 @@ function [elms,ylms,hidden_weights_cell,output_weights] = ...
 
         % update last hidden layer weights -- non linear
         layer_weights = hidden_weights_cell{end};
-        if obj.numHiddenLayer == 1, % only one hidden layer
+        if obj.NumOfHiddenLayer == 1, % only one hidden layer
             layer_input = xtdl;
         else
             layer_input = layer_output_cell{end-1};
         end
         xx = delta'*layer_input';
         layer_weights = layer_weights + 2*mu*xx;
-
+        
+        
+        
         hidden_weights_new{end} = layer_weights;
 
         % n-1th hidden layer to 1st hidden layer
@@ -151,7 +155,7 @@ function [elms,ylms,hidden_weights_cell,output_weights] = ...
             layer_weights = hidden_weights_cell{layer};
             xx = delta'*layer_input';
             layer_weights = layer_weights + 2*mu*xx;
-
+            
             hidden_weights_new{layer} = layer_weights;
         end
 

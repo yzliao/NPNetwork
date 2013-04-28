@@ -76,7 +76,7 @@ function Training(obj,varargin)
         end
         
         
-%         % test purpose
+        % test purpose
 %         xx = xtdl(:,L:N+L);
 %         p = length(find(abs(xx(:)>1)))/length(xx(:));
 %         display(['Largest:',num2str(max(abs(xx(:))))]);
@@ -124,7 +124,7 @@ function Training(obj,varargin)
     
 
     for n = 1:obj.TrainingIter,
-        for i = L:N+L,
+        for i = L+1:N+L,
         %for i = 1:N %%%
             xtdl = fixedLayerMtx(:,i);
             s = adaptive_weights'*xtdl;

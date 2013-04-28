@@ -1,25 +1,15 @@
-function [elms,ylms,hidden_weights_cell,output_weights] = ...
-    BP_Training(obj,mu,var1,prev_hidden_weights_cell,prev_output_weights)
-
+function [MSE_vec,MSEPer_vec,output_weights_history] = ...
+    AdvancedBP_Training(obj,TestingInputMtx,sys_fun,mu)
+    
     sigmoid_func = @(x) -1 + 2./(1+exp(-x));
-    switch var1,
-        case 'Linear',
-            ifLinear = true;
-            display('Linear');
-        case 'Nonlinear',
-            ifLinear = false;
-            display('Nonlinear');
-        otherwise,
-            ifLinear = false;
-            display('Nonlinear');
-    end
-
     
     % get parameters from object properties
     L = obj.L;
     N = obj.N;
+    M_vec = obj.M_vec;
     x_training = obj.x_training;
     d_training = obj.d_training;
+    
     if mu == 0,
         mu = obj.mu;
     end
@@ -34,41 +24,30 @@ function [elms,ylms,hidden_weights_cell,output_weights] = ...
         return;
     end
     
-    % initalize hidden layer weights
-    if nargin < 4,
-%         hidden_weights_cell = cell(length(obj.M_vec),1);
-%         %1st hidden layer
-%         weights_vec = -1 + 2*rand(obj.M_vec(1),L);
-%         hidden_weights_cell{1} = weights_vec;
-%     
-%         %2nd hidden layer to nth (last) hidden layer
-%         for layer = 2:length(obj.M_vec),
-%             weights_vec = -1 + 2*rand(obj.M_vec(layer),obj.M_vec(layer-1));
-%             hidden_weights_cell{layer} = weights_vec;
-%         end
-%         
-        hidden_weights_cell = obj.getFixedWeights();
+    
+    [p,q] = size(TestingInputMtx);
+    if p == N,
+        
+    elseif q == N,
+        TestingInputMtx = TestingInputMtx';
     else
-        hidden_weights_cell = prev_hidden_weights_cell;
+        display('Incorrect testing input size');
+        return;
     end
     
+    hidden_weights_cell = obj.getFixedWeights();
+    output_weights = zeros(1,obj.M_vec(end));
     
+    output_weights_history = zeros(N,M_vec(end));
+    MSE_vec = zeros(N,1);
+    MSEPer_vec = zeros(N,1);
     
-    % output layer
-    if nargin < 5,
-        %output_weights = -1+2*rand(1,obj.M_vec(end));
-        output_weights = zeros(1,obj.M_vec(end));
-    else
-        output_weights = prev_output_weights;
-    end
-
-    % output vector
-    ylms = zeros(N+L,1);
-    elms = zeros(N+L,1);
+    idx = 1;
+    tic
     
     % BP training algorithm
     for i = L+1:N+L,
-%    for i = 1:N, %%%
+
         layer_input = xTrainingMtx(:,i);
         layer_output_cell = cell(obj.NumOfHiddenLayer,1);
         hidden_weights_new = cell(obj.NumOfHiddenLayer,1);
@@ -93,22 +72,13 @@ function [elms,ylms,hidden_weights_cell,output_weights] = ...
         
 
         % compute output layer error -- linear error
-        if ifLinear,
-            delta = d_training(i) - output_layer_output;
-            ylms(i) = output_layer_output;
-        else
-            delta = d_training(i) - sigmoid_func(output_layer_output);
-            output_layer_output = sigmoid_func(output_layer_output);
-            ylms(i) = output_layer_output;
-        end
+
+        delta = d_training(i) - output_layer_output;
+        ylms(i) = output_layer_output;
         elms(i) = delta;
 
         % update output layer weights -- linear 
-        if ifLinear,
-            output_weights_new = output_weights + mu*delta*layer_input';
-        else
-            output_weights_new = output_weights + 2*mu*delta'*layer_input';
-        end
+        output_weights_new = output_weights + mu*delta*layer_input';
 
         % feedback 
         % last hidden layer
@@ -161,11 +131,26 @@ function [elms,ylms,hidden_weights_cell,output_weights] = ...
 
         hidden_weights_cell = hidden_weights_new;
         output_weights = output_weights_new;
+        
+        % Test Part
+        testing_input = TestingInputMtx(idx,:);
+        testing_output = sys_fun(testing_input);
+        testing_input_mtx = streaming2mtx(testing_input,L,length(testing_input)-L,L);
+        obj.setTesting(testing_input_mtx,testing_output');
+        [test_error,~] = obj.BP_Testing(hidden_weights_cell,output_weights,'Linear');
+        MSE_vec(idx) = mean(test_error.^2);
+        MSEPer_vec(idx) = MSE_vec(idx)/mean(testing_output.^2);
+        
+        output_weights_history(idx,:) = output_weights;
+        
+        [idx toc]
+        idx = idx + 1;
 
 
     end
-    
-
-
 end
-
+    
+    
+    
+    
+    

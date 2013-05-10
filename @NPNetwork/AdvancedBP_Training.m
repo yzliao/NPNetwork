@@ -1,6 +1,10 @@
 function [MSE_vec,MSEPer_vec,output_weights_history] = ...
-    AdvancedBP_Training(obj,TestingInputMtx,sys_fun,mu)
+    AdvancedBP_Training(obj,TestingInputMtx,sys_fun,mu,output_scale,ifcont)
     
+    if nargin < 6,
+        ifcont = false;
+    end
+
     sigmoid_func = @(x) -1 + 2./(1+exp(-x));
     
     % get parameters from object properties
@@ -35,8 +39,21 @@ function [MSE_vec,MSEPer_vec,output_weights_history] = ...
         return;
     end
     
-    hidden_weights_cell = obj.getFixedWeights();
-    output_weights = zeros(1,obj.M_vec(end));
+    
+    
+    
+    if ifcont,
+        [hidden_weights_cell,output_weights] = obj.getBPWeights();
+    else
+
+        hidden_weights_cell = obj.getFixedWeights();
+
+        %%%%
+        %output_weights = zeros(1,obj.M_vec(end));
+        output_weights = -0.05+0.1*rand(1,obj.M_vec(end));
+        %%%%
+    end
+    
     
     output_weights_history = zeros(N,M_vec(end));
     MSE_vec = zeros(N,1);
@@ -134,12 +151,12 @@ function [MSE_vec,MSEPer_vec,output_weights_history] = ...
         
         % Test Part
         testing_input = TestingInputMtx(idx,:);
-        testing_output = sys_fun(testing_input);
+        testing_output = sys_fun(testing_input)/output_scale;
         testing_input_mtx = streaming2mtx(testing_input,L,length(testing_input)-L,L);
         obj.setTesting(testing_input_mtx,testing_output');
         [test_error,~] = obj.BP_Testing(hidden_weights_cell,output_weights,'Linear');
-        MSE_vec(idx) = mean(test_error.^2);
-        MSEPer_vec(idx) = MSE_vec(idx)/mean(testing_output.^2);
+        MSE_vec(idx) = mean(test_error(L+1:end).^2);
+        MSEPer_vec(idx) = MSE_vec(idx)/mean(testing_output(L+1:end).^2);
         
         output_weights_history(idx,:) = output_weights;
         
@@ -148,6 +165,9 @@ function [MSE_vec,MSEPer_vec,output_weights_history] = ...
 
 
     end
+    obj.y_BPtraining = ylms;
+    obj.e_BPtraining = elms;
+    obj.setBPWeights(hidden_weights_cell,output_weights);
 end
     
     

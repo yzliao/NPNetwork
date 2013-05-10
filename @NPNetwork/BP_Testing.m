@@ -51,6 +51,6 @@ function [elms,ylms] = BP_Testing ...
         ylms = sigmoid_func(layer_output');
     end
     
-    elms(L:end) = d_testing(L:end) - ylms(L:end);
+    elms(L+1:end) = d_testing(L+1:end) - ylms(L+1:end);
     
 end

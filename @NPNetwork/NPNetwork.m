@@ -15,6 +15,7 @@ classdef NPNetwork<handle
         M_vec               = 0;        % Number of neurons on each layer
                                         % length(M_vec) =
                                         % NumOfHiddenLayer
+        outputLayer         = 0;        % Number of neurons on output layer
     end
     
     properties(Access = protected)
@@ -46,19 +47,32 @@ classdef NPNetwork<handle
         y_training = 0;
         e_training = 0;
         
+        y_BPtraining = 0;
+        e_BPtraining = 0;
+        
+        
         % testing
         x_testing = 0;
         d_testing = 0;
         
         y_testing = 0;
         e_testing = 0; 
+        
+        y_BPtesting = 0;
+        e_BPtesting = 0;
+    end
+    
+    properties(Access = protected)
+        % BP variables
+        BP_hidden_weights = 0;
+        BP_output_weights = 0;
     end
         
     
     
     methods
         % constructor
-        function obj = NPNetwork(L,M_vec,N)
+        function obj = NPNetwork(L,M_vec,N,output_layer)
             if nargin > 0,
                 obj.L = L;
                 obj.M_vec = M_vec;
@@ -66,11 +80,13 @@ classdef NPNetwork<handle
                 obj.N = N;
 
                 obj.NumOfHiddenLayer = length(M_vec);
+                
+                obj.outputLayer = output_layer;
 
                 % only the output layer is adaptive. 
                 % the number of neurons on the output layer = the number of
                 % neurons on the last hidden layer
-                obj.adaptive_weights = zeros(M_vec(end),1);
+                obj.adaptive_weights = zeros(M_vec(end),output_layer);
             else
                 obj.L = 0;
                 obj.M_vec = 0;
@@ -173,6 +189,26 @@ classdef NPNetwork<handle
             obj.showDistributionInfo();
         end
         
+        % initalize fixed weights by layer
+        function initFixedWeightsbyLayer(obj,layer)
+            a = obj.RndVar1;
+            b = obj.RndVar2;
+            if strcmp(obj.RndDistribution,'Normal')
+                if layer == 1,
+                    weights = a + sqrt(b) * randn(obj.M_vec(1),obj.L);
+                else
+                    weights = a + sqrt(b) * randn(obj.M_vec(layer),obj.M_vec(layer-1));
+                end
+            elseif strcmp(obj.RndDistribution,'Uniform')
+                if layer == 1,
+                    weights = a + (b-a)*rand(obj.M_vec(1),obj.L);
+                else
+                    weights = a + (b-a)*rand(obj.M_vec(layer),obj.M_vec(layer-1));
+                end
+            end
+            obj.fixed_weights_vec{layer} = weights;
+        end
+        
         % get fixed weights
         function weights = getFixedWeights(obj)
             weights = obj.fixed_weights_vec;
@@ -188,6 +224,19 @@ classdef NPNetwork<handle
             obj.adaptive_weights = var1;
         end
         
+        % get BP weights
+        function [hidden_weights, output_weights] = getBPWeights(obj)
+            hidden_weights = obj.BP_hidden_weights;
+            output_weights = obj.BP_output_weights;
+        end
+        
+        % set BP weights
+        function setBPWeights(obj,hidden_weights,output_weights)
+            obj.BP_hidden_weights = hidden_weights;
+            obj.BP_output_weights = output_weights;
+        end
+        
+        
         % set Training signal
         function setTraining(obj,x_training,d_training)
             
@@ -198,7 +247,15 @@ classdef NPNetwork<handle
 %             end
             
             obj.x_training = x_training;
-            obj.d_training = d_training;
+            %obj.d_training = d_training;
+            
+            [p,~] = size(d_training);
+            if p == obj.outputLayer,
+                obj.d_training = d_training;
+            else
+                obj.d_training = d_training';
+            end
+            
             
             obj.e_training = zeros(size(x_training));
             obj.y_training = zeros(size(x_training));
@@ -214,7 +271,14 @@ classdef NPNetwork<handle
 %             end
             
             obj.x_testing = x_testing;
-            obj.d_testing = d_testing;
+            %obj.d_testing = d_testing;
+            
+            [p,~] = size(d_testing);
+            if p == obj.outputLayer,
+                obj.d_testing = d_testing;
+            else
+                obj.d_testing = d_testing';
+            end
             
             obj.y_testing = zeros(size(x_testing));
             obj.e_testing = zeros(size(x_testing));
@@ -232,6 +296,34 @@ classdef NPNetwork<handle
                 error('Incorrect input variable');
             end
         end
+        
+        % get BP output signal
+        function [err,y] = getBPOutputSignal(obj,par)
+            if strcmp(par,'Training')
+                err = obj.e_BPtraining;
+                y = obj.y_BPtraining;
+            elseif strcmp(par,'Testing')
+                err = obj.e_BPtesting;
+                y = obj.y_BPtesting;
+            else
+                error('Incorrect input variable');
+            end
+        end
+        
+        % get input signal
+        function [x,d] = getInputSignal(obj,par)
+            if strcmp(par,'Training')
+                x = obj.x_training;
+                d = obj.d_training;
+            elseif strcmp(par,'Testing')
+                x = obj.x_testing;
+                d = obj.y_testing;
+            else
+                error('Incorrect input variable');
+            end
+        end
+        
+        
         
         % save object
         function saveObj(obj,fn,varargin)

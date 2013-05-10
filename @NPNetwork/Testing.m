@@ -63,8 +63,8 @@ function Testing(obj,varargin)
     end
     
     % adaptive layer
-    filter_error = zeros(N+L,1);
-    filter_output = zeros(N+L,1);
+    filter_error = zeros(N+L,obj.outputLayer);
+    filter_output = zeros(N+L,obj.outputLayer);
     
     adaptive_weights = obj.getAdaptiveWeights();
     
@@ -76,7 +76,7 @@ function Testing(obj,varargin)
         filter_output = sigmoid_func(s');
     end
     
-    filter_error(L:end) = d_testing(L:end)-filter_output(L:end);
+    filter_error(L+1:end,:) = d_testing(:,L+1:end)'-filter_output(L+1:end,:);
     
     obj.y_testing = filter_output;
     obj.e_testing = filter_error;

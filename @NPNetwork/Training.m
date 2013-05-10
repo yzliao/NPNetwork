@@ -112,14 +112,14 @@ function Training(obj,varargin)
     end
     
     % adaptive layer
-    elms = zeros(N+L,1);
-    ylms = zeros(N+L,1);
+    elms = zeros(N+L,obj.outputLayer);
+    ylms = zeros(N+L,obj.outputLayer);
     
     if ifHiddenLayer,
         adaptive_weights = obj.getAdaptiveWeights();    % from last hidden layer
     else
         %adaptive_weights = -0.1+0.2*rand(L,1);                  % from tapped delay line
-        adaptive_weights = zeros(L,1);
+        adaptive_weights = zeros(L,obj.outputLayer);
     end
     
 
@@ -134,19 +134,21 @@ function Training(obj,varargin)
                 filter_output = sigmoid_func(s);
             end
             
-            filter_error = d_training(i)-filter_output;
+            filter_error = d_training(:,i)-filter_output;
             
-            ylms(i) = filter_output;
-            elms(i) = filter_error;
+            ylms(i,:) = filter_output;
+            elms(i,:) = filter_error;
             
             if ifLinear,
                 % theta_j = theta_j + mu*(y^(i) - theta_j'*x^(i))*x_j^(i)
-                adaptive_weights = adaptive_weights + mu*filter_error*xtdl;
+                update_term = mu*filter_error*xtdl';
+                adaptive_weights = adaptive_weights + update_term';
             else
                 sigmoid_dot = 0.5*(1-filter_output.^2);
                 % theta = theta + 2*mu*sigmoid_dot*error*xtdl
-                adaptive_weights = adaptive_weights + 2*mu*sigmoid_dot*...
-                    filter_error*xtdl;
+                %%%%%Possible error%%%%%%%
+                update_term = 2*mu*sigmoid_dot*filter_error*xtdl';
+                adaptive_weights = adaptive_weights + update_term';
             end
      
         end

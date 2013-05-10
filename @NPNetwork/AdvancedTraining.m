@@ -1,6 +1,11 @@
 function [MSE_vec,MSEPer_vec,weights_history] = ...
-    AdvancedTraining(obj,TestingInputMtx,sys_fun)
-% calculating the MSE by testing at each training cycle
+    AdvancedTraining(obj,TestingInputMtx,sys_fun,output_scale,ifcont)
+
+    if nargin < 5,
+        ifcont = false;
+    end
+    
+    % calculating the MSE by testing at each training cycle
     sigmoid_func = @(x) -1+2./(1+exp(-x));
     
     % get parameters from object properties
@@ -30,6 +35,8 @@ function [MSE_vec,MSEPer_vec,weights_history] = ...
         return;
     end
     
+    
+    
     fixedWeightVec = obj.getFixedWeights();
     xtdl_sig = xTrainingMtx;
     for i = 1:obj.NumOfHiddenLayer,
@@ -58,8 +65,13 @@ function [MSE_vec,MSEPer_vec,weights_history] = ...
     MSE_vec = zeros(N,1);
     MSEPer_vec = zeros(N,1);
     
-  
-    adaptive_weights = obj.getAdaptiveWeights();    % from last hidden layer
+    %%%%  
+    if ifcont
+        adaptive_weights = obj.getAdaptiveWeights();    % from last hidden layer
+    else
+        adaptive_weights = -0.05+0.1*rand(size(obj.getAdaptiveWeights()));
+    end
+    %%%%
 
     
     idx = 1;
@@ -80,13 +92,13 @@ function [MSE_vec,MSEPer_vec,weights_history] = ...
         
         % Test part
         testing_input = TestingInputMtx(idx,:);
-        testing_output = sys_fun(testing_input);
+        testing_output = sys_fun(testing_input)/output_scale;
         testing_input_mtx = streaming2mtx(testing_input,L,length(testing_input)-L,L);
         obj.setTesting(testing_input_mtx,testing_output');
         obj.Testing('Linear','Hidden Layer');
         [test_error,~] = obj.getOutputSignal('Testing');
-        MSE_vec(idx) = mean(test_error.^2);
-        MSEPer_vec(idx) = MSE_vec(idx)/mean(testing_output.^2);
+        MSE_vec(idx) = mean(test_error(L+1:end).^2);
+        MSEPer_vec(idx) = MSE_vec(idx)/mean(testing_output(L+1:end).^2);
         
         [idx toc]
         idx = idx + 1;
@@ -94,6 +106,7 @@ function [MSE_vec,MSEPer_vec,weights_history] = ...
     end
     obj.y_training = ylms;
     obj.e_training = elms;
+    obj.setAdaptiveWeights(adaptive_weights);
     
 end
     

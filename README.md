@@ -11,7 +11,7 @@ add following feature:
 1. display parameters for Training function
 
 lyz@March 14th, 2013
-=================================
+
 ### Release Note for v1.0
 
 In v1.0, we implemented the following features:
